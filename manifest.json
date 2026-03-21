@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Image Collector",
+  "version": "1.3",
+  "description": "Collects all images on the page and lets you download them.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "downloads"
+  ],
+  "icons": {
+    "256": "icon.png"
+  },
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "service_worker": "background.js"
+  },
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "overview.html",
+    "default_title": "Collect Images",
+    "default_icon": {
+      "256": "icon.png"
+    }
+  }
+}

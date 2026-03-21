@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Collector</title>
+  <link rel="stylesheet" href="overview.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <header>
+    <h1>Image Collector</h1>
+    <div class="header-actions">
+      <span id="status">Scanning...</span>
+      <button id="selectAllBtn" class="btn secondary">Select All</button>
+      <button id="downloadBtn" class="btn primary" disabled>Download (<span id="selectionCount">0</span>)</button>
+    </div>
+  </header>
+
+  <div class="filters">
+    <div class="filter-group options-group">
+      <span class="label">Types:</span>
+      <label><input type="checkbox" name="ext" value="jpg" checked> JPG</label>
+      <label><input type="checkbox" name="ext" value="png" checked> PNG</label>
+      <label><input type="checkbox" name="ext" value="gif" checked> GIF</label>
+      <label><input type="checkbox" name="ext" value="webp" checked> WEBP</label>
+      <label><input type="checkbox" name="ext" value="svg" checked> SVG</label>
+      <label><input type="checkbox" name="ext" value="other" checked> Other</label>
+    </div>
+    <div class="filter-group">
+      <label class="label" title="Enable Minimum Size Restrictions" style="display:flex; align-items:center; gap:0.3rem; cursor:pointer;">
+        <input type="checkbox" id="enableMinSizeBtn" style="accent-color: var(--primary); cursor:pointer; width:14px; height:14px; margin:0;" checked> Min Size:
+      </label>
+      <input type="number" id="minWidth" placeholder="W" min="0" value="300" step="10">
+      <span style="font-size: 0.8rem; color: var(--text-muted);">x</span>
+      <input type="number" id="minHeight" placeholder="H" min="0" value="300" step="10">
+      <span style="font-size: 0.8rem; color: var(--text-muted);">px</span>
+      <label title="Fetch network headers to find image types"
+        style="margin-left:1rem;margin-right:1rem; display:flex; align-items:center; gap:0.3rem; font-size:0.85rem; color:var(--text-main); cursor:pointer;">
+        <input type="checkbox" id="resolveTypesBtn"
+          style="accent-color: var(--primary); cursor:pointer; width:14px; height:14px; margin:0;"> Fetch Unknown Types
+      </label>
+      <label title="Prefix filenames with sequence numbers based on their visual order (e.g. 01_img.jpg)"
+        style="margin-right:1rem; display:flex; align-items:center; gap:0.3rem; font-size:0.85rem; color:var(--text-main); cursor:pointer;">
+        <input type="checkbox" id="renameSequenceBtn"
+          style="accent-color: var(--primary); cursor:pointer; width:14px; height:14px; margin:0;" checked> Sequence
+        Rename
+      </label>
+    </div>
+  </div>
+
+  <main id="gallery" class="gallery">
+    <!-- Image items will be injected here -->
+  </main>
+
+  <footer id="statusBar" class="status-bar">Hover over an image to view its URL</footer>
+
+  <script src="overview.js"></script>
+</body>
+
+</html>
