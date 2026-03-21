@@ -21,9 +21,9 @@ A powerful, cross-browser extension natively supporting Google Chrome and Mozill
 1. Navigate to your address bar and enter: `chrome://extensions/`
 2. Enable **Developer mode** in the top right corner toggle.
 3. Click the **Load unpacked** button.
-4. Select this current `/media-collector` folder.
+4. Select this current `/image-collector` folder.
 
 ### Mozilla Firefox
 1. Navigate to your address bar and enter: `about:debugging#/runtime/this-firefox`
 2. Click the **Load Temporary Add-on...** button.
-3. Select the `manifest.json` file inside this `/media-collector` folder.
+3. Select the `manifest.json` file inside this `/image-collector` folder.
