@@ -218,13 +218,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const minH = parseInt(minHeightInput.value, 10) || 0;
 
     displayItems = dedupedItems.filter(item => {
-      // 1. Ignore strictly zero-dimension items
-      if (!item.width || !item.height || item.width === 0 || item.height === 0) {
+      const isDataUri = item.url.startsWith('data:image');
+
+      // 1. Ignore strictly zero-dimension items (skip check for data URIs — dimensions may be 0 if img not decoded yet)
+      if (!isDataUri && (!item.width || !item.height || item.width === 0 || item.height === 0)) {
         return false;
       }
 
-      // 2. Ignore tiny images
-      if (item.width <= 32 && item.height <= 32) {
+      // 2. Ignore tiny images (skip for data URIs)
+      if (!isDataUri && item.width <= 32 && item.height <= 32) {
         return false;
       }
 

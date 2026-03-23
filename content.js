@@ -55,8 +55,11 @@
 
   // 1. img tags and responsive picture tags
   document.querySelectorAll('img').forEach(img => {
-    addMedia(img.src, img.naturalWidth || img.width, img.naturalHeight || img.height);
-    if (img.currentSrc) {
+    const src = img.src;
+    const w = img.naturalWidth || img.width || (src.startsWith('data:') ? img.offsetWidth : 0);
+    const h = img.naturalHeight || img.height || (src.startsWith('data:') ? img.offsetHeight : 0);
+    addMedia(src, w, h);
+    if (img.currentSrc && img.currentSrc !== src) {
       addMedia(img.currentSrc, img.naturalWidth || img.width, img.naturalHeight || img.height);
     }
     
