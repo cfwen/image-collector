@@ -130,7 +130,8 @@ document.addEventListener('DOMContentLoaded', async () => {
               if (!item.url.startsWith('data:')) {
                 dedupKey = new URL(item.url).pathname;
               } else {
-                dedupKey = item.url.substring(0, 150);
+                // Use more chars to avoid false-duplicate matches between different data URI images
+                dedupKey = item.url.substring(0, 500);
               }
             } catch(e) {
               dedupKey = item.url;
@@ -182,10 +183,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (extensionCache.has(url)) return extensionCache.get(url);
 
     if (url.startsWith('data:image/')) {
-      const match = url.match(/data:image\/([a-zA-Z0-9]+);/);
+      // Match MIME type including svg+xml — capture until ; or ,
+      const match = url.match(/data:image\/([a-zA-Z0-9+]+)[;,]/);
       if (match) {
         let ext = match[1].toLowerCase();
         if (ext === 'jpeg') return 'jpg';
+        if (ext === 'svg+xml') return 'svg';
         return ext;
       }
       return 'unknown';
@@ -235,8 +238,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const mappedExt = ['jpg', 'png', 'gif', 'webp', 'svg'].includes(itemExt) ? itemExt : 'other';
       if (!allowedExts.has(mappedExt)) return false;
 
-      // 4. Min size filter
-      if (!enableMinSizeBtn || enableMinSizeBtn.checked) {
+      // 4. Min size filter (skip for data URIs — dimensions may not be known yet)
+      if (!isDataUri && (!enableMinSizeBtn || enableMinSizeBtn.checked)) {
         if (minW > 0 && item.width < minW) return false;
         if (minH > 0 && item.height < minH) return false;
       }
