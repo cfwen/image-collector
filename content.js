@@ -96,16 +96,25 @@
     }
   });
 
-  // 2. inline background images
+  // 2. background images and data URIs on any element
   document.querySelectorAll('*').forEach(el => {
+    // Greedy match to capture full URLs (including long data URIs with no early cutoff)
     const bgImage = window.getComputedStyle(el).backgroundImage;
     if (bgImage && bgImage !== 'none') {
-      const match = bgImage.match(/url\(['"]?(.*?)['"]?\)/);
+      const match = bgImage.match(/url\(["']?(data:[^"')]+|[^"')]+)["']?\)/);
       if (match && match[1]) {
-        // Resolve relative URL using an anchor element
         const a = document.createElement('a');
         a.href = match[1];
-        addMedia(a.href, 0, 0);
+        addMedia(a.href, el.offsetWidth || 0, el.offsetHeight || 0);
+      }
+    }
+
+    // Fallback: read raw inline style for data: URIs that computedStyle may truncate
+    const inlineStyle = el.getAttribute('style');
+    if (inlineStyle && inlineStyle.includes('data:image')) {
+      const dataMatches = [...inlineStyle.matchAll(/url\(["']?(data:image\/[^"')]+)["']?\)/g)];
+      for (const m of dataMatches) {
+        addMedia(m[1], el.offsetWidth || 0, el.offsetHeight || 0);
       }
     }
   });
