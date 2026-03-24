@@ -1,15 +1,35 @@
 :root {
-  --bg-color: #0f172a;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
+  --bg-color: #f8fafc;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
   --primary: #3b82f6;
   --primary-hover: #2563eb;
-  --secondary: #334155;
-  --secondary-hover: #475569;
-  --border: #1e293b;
-  --card-bg: #1e293b;
+  --secondary: #e2e8f0;
+  --secondary-hover: #cbd5e1;
+  --border: #e2e8f0;
+  --card-bg: #ffffff;
   --selected-border: #3b82f6;
-  color-scheme: dark;
+  --header-bg: rgba(248, 250, 252, 0.95);
+  --img-bg: #f1f5f9;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #0f172a;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --secondary: #334155;
+    --secondary-hover: #475569;
+    --border: #1e293b;
+    --card-bg: #1e293b;
+    --selected-border: #3b82f6;
+    --header-bg: rgba(15, 23, 42, 0.95);
+    --img-bg: #000000;
+    color-scheme: dark;
+  }
 }
 
 ::-webkit-scrollbar {
@@ -46,7 +66,7 @@ body {
 header {
   position: relative;
   flex-shrink: 0;
-  background-color: rgba(15, 23, 42, 0.95);
+  background-color: var(--header-bg);
   backdrop-filter: blur(10px);
   padding: 1rem 1.5rem;
   display: flex;
@@ -61,7 +81,7 @@ h1 {
   font-size: 1.25rem;
   font-weight: 600;
   white-space: nowrap;
-  color: #ffffff;
+  color: var(--text-main);
 }
 
 .header-actions {
@@ -247,7 +267,7 @@ input[type="number"]::-webkit-outer-spin-button {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  background-color: #000;
+  background-color: var(--img-bg);
   display: block;
 }
 
