@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Collector — Test Page</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f1117;
+      color: #c9d1d9;
+      padding: 32px 24px;
+      line-height: 1.6;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #e6edf3;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      color: #8b949e;
+      font-size: 0.92rem;
+      margin-bottom: 36px;
+    }
+
+    section {
+      margin-bottom: 40px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .section-header {
+      background: #1c2128;
+      padding: 12px 20px;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-header h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #e6edf3;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .badge-detected { background: #1f4520; color: #3fb950; border: 1px solid #238636; }
+    .badge-filtered { background: #3b1f1f; color: #f85149; border: 1px solid #da3633; }
+    .badge-url { background: #1a2d4a; color: #58a6ff; border: 1px solid #1f6feb; }
+
+    .section-body {
+      padding: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .test-card {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .test-card-label {
+      font-size: 0.75rem;
+      color: #8b949e;
+      padding: 8px 12px;
+      border-top: 1px solid #30363d;
+      background: #161b22;
+    }
+
+    .test-card-label strong {
+      color: #c9d1d9;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .test-card img {
+      display: block;
+      max-width: 100%;
+    }
+
+    .bg-box {
+      background-size: cover;
+      background-position: center;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🖼 Image Collector — Test Page</h1>
+  <p class="subtitle">Open this page in the browser, then activate the extension to verify detection across all scenarios.</p>
+
+  <!-- Section 1: img tag with data URI (PNG / JPEG) -->
+  <section>
+    <div class="section-header">
+      <h2>1 — &lt;img src="data:image/png"&gt; and &lt;img src="data:image/jpeg"&gt;</h2>
+      <span class="badge badge-detected">Should detect</span>
+    </div>
+    <div class="section-body">
+      <div class="test-card">
+        <img id="img-png" width="360" height="240">
+        <div class="test-card-label">
+          <strong>PNG via canvas</strong>
+          360×240 · data:image/png;base64,…
+        </div>
+      </div>
+      <div class="test-card">
+        <img id="img-jpg" width="360" height="240">
+        <div class="test-card-label">
+          <strong>JPEG via canvas</strong>
+          360×240 · data:image/jpeg;base64,…
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: img tag with SVG data URI -->
+  <section>
+    <div class="section-header">
+      <h2>2 — &lt;img src="data:image/svg+xml"&gt;</h2>
+      <span class="badge badge-detected">Should detect</span>
+    </div>
+    <div class="section-body">
+      <div class="test-card">
+        <img id="img-svg" width="360" height="240">
+        <div class="test-card-label">
+          <strong>SVG data URI</strong>
+          360×240 · data:image/svg+xml;base64,…
+        </div>
+      </div>
+      <div class="test-card">
+        <img id="img-svg-url" width="360" height="240">
+        <div class="test-card-label">
+          <strong>SVG data URI (URL-encoded, no base64)</strong>
+          360×240 · data:image/svg+xml,%3Csvg…
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: div background-image with data URI -->
+  <section>
+    <div class="section-header">
+      <h2>3 — &lt;div style="background-image: url(data:…)"&gt;</h2>
+      <span class="badge badge-detected">Should detect</span>
+    </div>
+    <div class="section-body">
+      <div class="test-card">
+        <div id="bg-style-1" class="bg-box" style="width:360px;height:240px;"></div>
+        <div class="test-card-label">
+          <strong>background-image inline style</strong>
+          360×240 · style="background-image: url(data:…)"
+        </div>
+      </div>
+      <div class="test-card">
+        <div id="bg-style-2" class="bg-box" style="width:360px;height:240px;"></div>
+        <div class="test-card-label">
+          <strong>background shorthand inline style</strong>
+          360×240 · style="background: url(data:…) center/cover"
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: Tiny images (should be filtered) -->
+  <section>
+    <div class="section-header">
+      <h2>4 — Tiny data URI images (below min size)</h2>
+      <span class="badge badge-filtered">Should be filtered (min size)</span>
+    </div>
+    <div class="section-body">
+      <div class="test-card" style="padding:16px;">
+        <img id="img-tiny" width="24" height="24">
+        <div class="test-card-label">
+          <strong>Tiny PNG</strong>
+          24×24 · filtered when min size &gt; 24
+        </div>
+      </div>
+      <div class="test-card" style="padding:16px;">
+        <img id="img-1px" width="1" height="1">
+        <div class="test-card-label">
+          <strong>1×1 pixel PNG</strong>
+          1×1 · also filtered by ≤32×32 guard
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 5: Regular URL images -->
+  <section>
+    <div class="section-header">
+      <h2>5 — Regular &lt;img src="https://…"&gt;</h2>
+      <span class="badge badge-url">Regular URL</span>
+    </div>
+    <div class="section-body">
+      <div class="test-card">
+        <img src="https://picsum.photos/seed/alpha/360/240" width="360" height="240" loading="lazy">
+        <div class="test-card-label">
+          <strong>picsum.photos/seed/alpha</strong>
+          360×240
+        </div>
+      </div>
+      <div class="test-card">
+        <img src="https://picsum.photos/seed/beta/360/240" width="360" height="240" loading="lazy">
+        <div class="test-card-label">
+          <strong>picsum.photos/seed/beta</strong>
+          360×240
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 6: srcset images -->
+  <section>
+    <div class="section-header">
+      <h2>6 — &lt;img&gt; with srcset</h2>
+      <span class="badge badge-url">Regular URL</span>
+    </div>
+    <div class="section-body">
+      <div class="test-card">
+        <img
+          src="https://picsum.photos/seed/srcset/360/240"
+          srcset="https://picsum.photos/seed/srcset/360/240 360w,
+                  https://picsum.photos/seed/srcset/720/480 720w,
+                  https://picsum.photos/seed/srcset/1080/720 1080w"
+          sizes="360px"
+          width="360" height="240" loading="lazy">
+        <div class="test-card-label">
+          <strong>srcset 360w / 720w / 1080w</strong>
+          Extension should pick the largest (1080w)
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 7: picture element -->
+  <section>
+    <div class="section-header">
+      <h2>7 — &lt;picture&gt; with &lt;source&gt; tags</h2>
+      <span class="badge badge-url">Regular URL</span>
+    </div>
+    <div class="section-body">
+      <div class="test-card">
+        <picture>
+          <source
+            srcset="https://picsum.photos/seed/webp/360/240"
+            type="image/webp">
+          <img
+            src="https://picsum.photos/seed/webp-fallback/360/240"
+            width="360" height="240" loading="lazy">
+        </picture>
+        <div class="test-card-label">
+          <strong>&lt;picture&gt; WebP source + JPEG fallback</strong>
+          Both source URLs should appear
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Utility: draw a colored canvas with a text label
+    function makeCanvas(w, h, color, label, textColor = 'white') {
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, w, h);
+      // Subtle grid pattern
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+      for (let y = 0; y < h; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+      if (label) {
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fillRect(0, h / 2 - 28, w, 56);
+        ctx.fillStyle = textColor;
+        ctx.font = `bold ${Math.max(14, Math.floor(h / 10))}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, w / 2, h / 2);
+      }
+      return c;
+    }
+
+    // --- Section 1: PNG and JPEG data URIs ---
+    document.getElementById('img-png').src =
+      makeCanvas(360, 240, '#1a6b9a', 'PNG · 360×240').toDataURL('image/png');
+
+    document.getElementById('img-jpg').src =
+      makeCanvas(360, 240, '#9a3b1a', 'JPEG · 360×240').toDataURL('image/jpeg', 0.92);
+
+    // --- Section 2: SVG data URIs ---
+    const svgB64 = `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="240">
+      <defs>
+        <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#6a0dad"/>
+          <stop offset="100%" style="stop-color:#e040fb"/>
+        </linearGradient>
+      </defs>
+      <rect width="360" height="240" fill="url(#g)"/>
+      <text x="180" y="120" font-size="28" font-family="sans-serif" fill="white"
+            text-anchor="middle" dominant-baseline="middle" font-weight="bold">SVG · 360×240</text>
+    </svg>`;
+    document.getElementById('img-svg').src =
+      'data:image/svg+xml;charset=utf-8;base64,' + btoa(unescape(encodeURIComponent(svgB64)));
+
+    const svgUrlEncoded = encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="240">
+        <rect width="360" height="240" fill="#1a5c3a"/>
+        <text x="180" y="120" font-size="22" font-family="sans-serif" fill="white"
+              text-anchor="middle" dominant-baseline="middle" font-weight="bold">SVG URL-encoded · 360×240</text>
+      </svg>`
+    );
+    document.getElementById('img-svg-url').src =
+      'data:image/svg+xml;charset=utf-8,' + svgUrlEncoded;
+
+    // --- Section 3: div background-image ---
+    const bg1Url = makeCanvas(360, 240, '#1a4a3a', 'background-image: url(data:…)').toDataURL('image/png');
+    document.getElementById('bg-style-1').style.backgroundImage = `url('${bg1Url}')`;
+
+    const bg2Url = makeCanvas(360, 240, '#4a3a1a', 'background: url(data:…) center/cover').toDataURL('image/png');
+    document.getElementById('bg-style-2').style.background = `url('${bg2Url}') center/cover`;
+
+    // --- Section 4: Tiny images ---
+    document.getElementById('img-tiny').src =
+      makeCanvas(24, 24, '#e040fb', '').toDataURL('image/png');
+    document.getElementById('img-1px').src =
+      makeCanvas(1, 1, '#ff0000', '').toDataURL('image/png');
+  </script>
+
+</body>
+</html>
