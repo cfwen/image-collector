@@ -124,33 +124,37 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (!seenRawUrls.has(item.url)) {
             seenRawUrls.add(item.url);
             rawMediaItems.push(item);
-            
-            let dedupKey = 'unknown';
-            try {
-              if (!item.url.startsWith('data:')) {
+            newlyAdded = true;
+
+            if (item.url.startsWith('data:')) {
+              // Skip deduplication for data URI images — add each one directly
+              dedupedItems.push(item);
+            } else {
+              let dedupKey = 'unknown';
+              try {
                 dedupKey = new URL(item.url).pathname;
-              } else {
-                // Use more chars to avoid false-duplicate matches between different data URI images
-                dedupKey = item.url.substring(0, 500);
+              } catch(e) {
+                dedupKey = item.url;
               }
-            } catch(e) {
-              dedupKey = item.url;
+
+              if (!globalFileGroups.has(dedupKey)) {
+                globalFileGroups.set(dedupKey, []);
+              }
+              globalFileGroups.get(dedupKey).push(item);
             }
-            
-            if (!globalFileGroups.has(dedupKey)) {
-              globalFileGroups.set(dedupKey, []);
-              newlyAdded = true;
-            }
-            globalFileGroups.get(dedupKey).push(item);
           }
         });
 
         if (newlyAdded) {
-          dedupedItems = [];
+          // Rebuild dedupedItems from file groups (data URI items are already pushed above)
+          const grouped = [];
           globalFileGroups.forEach(group => {
             group.sort((a, b) => (b.width * b.height) - (a.width * a.height));
-            dedupedItems.push(group[0]); 
+            grouped.push(group[0]);
           });
+          // Replace only the grouped (non-data-URI) portion, keeping data URI items
+          const dataUriItems = dedupedItems.filter(i => i.url.startsWith('data:'));
+          dedupedItems = [...dataUriItems, ...grouped];
           processItems(); 
         } else if (rawMediaItems.length === 0) {
           statusEl.textContent = "No images found on this page yet. Scroll to load...";
@@ -238,8 +242,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const mappedExt = ['jpg', 'png', 'gif', 'webp', 'svg'].includes(itemExt) ? itemExt : 'other';
       if (!allowedExts.has(mappedExt)) return false;
 
-      // 4. Min size filter (skip for data URIs — dimensions may not be known yet)
-      if (!isDataUri && (!enableMinSizeBtn || enableMinSizeBtn.checked)) {
+      // 4. Min size filter
+      if (!enableMinSizeBtn || enableMinSizeBtn.checked) {
         if (minW > 0 && item.width < minW) return false;
         if (minH > 0 && item.height < minH) return false;
       }

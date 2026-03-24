@@ -55,47 +55,76 @@
 
   // 1. img tags and responsive picture tags
   document.querySelectorAll('img').forEach(img => {
+    let candidates = [];
     const src = img.src;
-    const w = img.naturalWidth || img.width || (src.startsWith('data:') ? img.offsetWidth : 0);
-    const h = img.naturalHeight || img.height || (src.startsWith('data:') ? img.offsetHeight : 0);
-    addMedia(src, w, h);
-    if (img.currentSrc && img.currentSrc !== src) {
-      addMedia(img.currentSrc, img.naturalWidth || img.width, img.naturalHeight || img.height);
+
+    // Estimate aspect ratio and fallback dimensions
+    let fallbackW = img.naturalWidth || img.width || (src && src.startsWith('data:') ? img.offsetWidth : 800);
+    let fallbackH = img.naturalHeight || img.height || (src && src.startsWith('data:') ? img.offsetHeight : 800);
+    const aspect = (fallbackH && fallbackW) ? (fallbackH / fallbackW) : 1;
+
+    // A. Add currentSrc
+    if (img.currentSrc) {
+      candidates.push({
+        url: img.currentSrc,
+        w: img.naturalWidth || img.width || 0,
+        h: img.naturalHeight || img.height || 0
+      });
     }
-    
-    // Estimate aspect ratio to prevent 0-height discard
-    const aspect = (img.naturalHeight && img.naturalWidth) ? 
-        (img.naturalHeight / img.naturalWidth) : 
-        ((img.height && img.width) ? (img.height / img.width) : 1);
 
-    const fallbackWidth = img.naturalWidth || img.width || 800;
+    // B. Add base src
+    if (src) {
+      const w = img.naturalWidth || img.width || (src.startsWith('data:') ? img.offsetWidth : 0);
+      const h = img.naturalHeight || img.height || (src.startsWith('data:') ? img.offsetHeight : 0);
+      candidates.push({ url: src, w: w, h: h });
+    }
 
-    // Direct img tag srcsets
+    // C. Direct img tag srcsets
     if (img.srcset) {
-      const best = getLargestSrcset(img.srcset, fallbackWidth);
+      const best = getLargestSrcset(img.srcset, fallbackW);
       if (best && best.url) {
-         const a = document.createElement('a');
-         a.href = best.url;
-         let w = best.w > 0 ? best.w : fallbackWidth;
-         let h = Math.round(w * aspect);
-         addMedia(a.href, w, h);
+        const a = document.createElement('a');
+        a.href = best.url;
+        let w = best.w > 0 ? best.w : fallbackW;
+        let h = Math.round(w * aspect);
+        candidates.push({ url: a.href, w: w, h: h });
       }
     }
     
-    // HTML5 picture sibling source tags
+    // D. HTML5 picture sibling source tags
     if (img.parentElement && img.parentElement.tagName.toLowerCase() === 'picture') {
       img.parentElement.querySelectorAll('source').forEach(source => {
-         if (source.srcset) {
-            const best = getLargestSrcset(source.srcset, fallbackWidth);
-            if (best && best.url) {
-               const a = document.createElement('a');
-               a.href = best.url;
-               let w = best.w > 0 ? best.w : fallbackWidth;
-               let h = Math.round(w * aspect);
-               addMedia(a.href, w, h);
-            }
-         }
+        if (source.srcset) {
+          const best = getLargestSrcset(source.srcset, fallbackW);
+          if (best && best.url) {
+            const a = document.createElement('a');
+            a.href = best.url;
+            let w = best.w > 0 ? best.w : fallbackW;
+            let h = Math.round(w * aspect);
+            candidates.push({ url: a.href, w: w, h: h });
+          }
+        }
       });
+    }
+
+    // Pick the one with the maximum width
+    let bestCandidate = null;
+    let maxW = -1;
+    for (const c of candidates) {
+      if (!c.url || c.url.startsWith('chrome-extension://') || c.url.startsWith('moz-extension://')) continue;
+      // remove fragments
+      c.url = c.url.split('#')[0];
+      if (c.url.length === 0) continue;
+
+      if (c.w > maxW) {
+        maxW = c.w;
+        bestCandidate = c;
+      }
+    }
+
+    // Emit only the best candidate for this element
+    if (bestCandidate) {
+      addMedia(bestCandidate.url, bestCandidate.w, bestCandidate.h);
     }
   });
 
