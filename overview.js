@@ -184,7 +184,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
               let dedupKey = 'unknown';
               try {
-                dedupKey = new URL(item.url).pathname;
+                const urlObj = new URL(item.url);
+                // Handle common image proxies like Next.js /_next/image?url=...
+                if (urlObj.pathname.includes('_next/image') && urlObj.searchParams.has('url')) {
+                  dedupKey = urlObj.searchParams.get('url');
+                } else if (urlObj.searchParams.has('src')) {
+                  dedupKey = urlObj.searchParams.get('src');
+                } else if (urlObj.searchParams.has('img')) {
+                  dedupKey = urlObj.searchParams.get('img');
+                } else {
+                  dedupKey = urlObj.pathname;
+                }
               } catch (e) {
                 dedupKey = item.url;
               }
@@ -256,7 +266,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-      const pathname = new URL(url).pathname;
+      const urlObj = new URL(url);
+      const pathname = urlObj.pathname;
       const parts = pathname.split('/');
       let filename = parts[parts.length - 1];
 
@@ -266,6 +277,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (['jpg', 'png', 'gif', 'webp', 'svg', 'ico', 'avif', 'bmp'].includes(ext)) {
           return ext;
         }
+      }
+
+      // Fallback: Check the entire URL for extensions (common in proxies/CDNs)
+      const fullPath = urlObj.href.toLowerCase();
+      const match = fullPath.match(/\.(jpg|jpeg|png|gif|webp|svg|avif|ico|bmp)(?:\?|&|#|$)/);
+      if (match) {
+        let ext = match[1];
+        if (ext === 'jpeg') return 'jpg';
+        return ext;
       }
     } catch (e) { }
 
@@ -381,8 +401,41 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
             if (results && results[0] && results[0].result) {
               mediaContent.src = results[0].result;
+              // Update error handler after fallback
+              mediaContent.onerror = () => {
+                itemEl.classList.add('broken');
+                if (selectedUrls.has(item.url)) {
+                  selectedUrls.delete(item.url);
+                  itemEl.classList.remove('selected');
+                  updateSelectionState();
+                }
+              };
+            } else {
+              itemEl.classList.add('broken');
+              if (selectedUrls.has(item.url)) {
+                selectedUrls.delete(item.url);
+                itemEl.classList.remove('selected');
+                updateSelectionState();
+              }
             }
-          } catch (e) {}
+          } catch (e) {
+            itemEl.classList.add('broken');
+            if (selectedUrls.has(item.url)) {
+              selectedUrls.delete(item.url);
+              itemEl.classList.remove('selected');
+              updateSelectionState();
+            }
+          }
+        };
+      } else {
+        // Direct broken link detection for regular web URLs
+        mediaContent.onerror = () => {
+          itemEl.classList.add('broken');
+          if (selectedUrls.has(item.url)) {
+            selectedUrls.delete(item.url);
+            itemEl.classList.remove('selected');
+            updateSelectionState();
+          }
         };
       }
 
