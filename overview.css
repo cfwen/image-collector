@@ -66,8 +66,7 @@ body {
 header {
   position: relative;
   flex-shrink: 0;
-  background-color: var(--header-bg);
-  backdrop-filter: blur(10px);
+  background-color: var(--card-bg);
   padding: 1rem 1.5rem;
   display: flex;
   justify-content: space-between;
@@ -223,6 +222,7 @@ input[type="number"]::-webkit-outer-spin-button {
   align-content: start;
   scrollbar-color: var(--secondary) var(--bg-color);
   scrollbar-width: thin;
+  transform: translateZ(0);
 }
 
 .status-bar {
@@ -252,6 +252,7 @@ input[type="number"]::-webkit-outer-spin-button {
   display: flex;
   align-items: center;
   justify-content: center;
+  transform: translateZ(0);
 }
 
 .media-item:hover {
@@ -261,6 +262,14 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .media-item.selected {
   border-color: var(--selected-border);
+}
+
+.media-item.downloaded {
+  border-color: #22c55e !important;
+}
+
+.media-item.failed {
+  border-color: #fab005 !important;
 }
 
 .media-item img {
@@ -296,23 +305,11 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .checkmark {
-  position: absolute;
-  top: 0.4rem;
-  right: 0.4rem;
-  width: 20px;
-  height: 20px;
-  background-color: white;
-  border-radius: 50%;
-  border: 2px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: all 0.2s ease;
+  display: none;
 }
 
 .media-item.selected .checkmark {
-  opacity: 1;
+  opacity: 0.8;
   background-color: var(--primary);
   border-color: var(--primary);
 }
@@ -361,16 +358,6 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .media-item.downloaded .download-badge {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
+  display: none;
 }
 
-.download-badge::after {
-  content: '';
-  width: 12px;
-  height: 20px;
-  border: solid white;
-  border-width: 0 4px 4px 0;
-  transform: rotate(45deg);
-  margin-top: -4px;
-}

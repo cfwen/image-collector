@@ -6,7 +6,8 @@
   "permissions": [
     "activeTab",
     "scripting",
-    "downloads"
+    "downloads",
+    "storage"
   ],
   "icons": {
     "256": "icon.png"
@@ -26,5 +27,6 @@
     "default_icon": {
       "256": "icon.png"
     }
-  }
+  },
+  "content_scripts": []
 }

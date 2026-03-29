@@ -5,8 +5,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   const statusEl = document.getElementById('status');
   const downloadBtn = document.getElementById('downloadBtn');
   const selectAllBtn = document.getElementById('selectAllBtn');
+  const reviewBtn = document.getElementById('reviewBtn');
   const selectionCountEl = document.getElementById('selectionCount');
-  
+
+  const reviewOverlay = document.getElementById('reviewOverlay');
+  const reviewCloseBtn = document.getElementById('reviewCloseBtn');
+  const reviewPrevBtn = document.getElementById('reviewPrevBtn');
+  const reviewNextBtn = document.getElementById('reviewNextBtn');
+  const reviewMainImg = document.getElementById('reviewMainImg');
+  const reviewThumbnails = document.getElementById('reviewThumbnails');
+  const reviewStatus = document.getElementById('reviewStatus');
+  const reviewPlayBtn = document.getElementById('reviewPlayBtn');
+  const reviewPeriodInput = document.getElementById('reviewPeriodInput');
+  const reviewLoopBtn = document.getElementById('reviewLoopBtn');
+  const reviewSelectCheckbox = document.getElementById('reviewSelectCheckbox');
+
   const extCheckboxes = document.querySelectorAll('input[name="ext"]');
   const minWidthInput = document.getElementById('minWidth');
   const minHeightInput = document.getElementById('minHeight');
@@ -24,26 +37,65 @@ document.addEventListener('DOMContentLoaded', async () => {
   let sourceTabTitle = "Unknown Page";
   let sourceTabUrl = "";
 
+
   const extensionCache = new Map();
 
   const enableMinSizeBtn = document.getElementById('enableMinSizeBtn');
 
-  extCheckboxes.forEach(cb => cb.addEventListener('change', processItems));
-  minWidthInput.addEventListener('input', processItems);
-  minHeightInput.addEventListener('input', processItems);
-  
+  function saveOptions() {
+    const exts = Array.from(extCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+    extAPI.storage.local.set({
+      popupOptions: {
+        exts: exts,
+        enableMinSize: enableMinSizeBtn ? enableMinSizeBtn.checked : true,
+        minWidth: minWidthInput.value,
+        minHeight: minHeightInput.value,
+        resolveTypes: resolveTypesBtn.checked,
+        renameSequence: renameSequenceBtn ? renameSequenceBtn.checked : true
+      }
+    });
+  }
+
+  function loadOptions(opts) {
+    if (opts.exts) {
+      extCheckboxes.forEach(cb => {
+        cb.checked = opts.exts.includes(cb.value);
+      });
+    }
+    if (opts.enableMinSize !== undefined && enableMinSizeBtn) {
+      enableMinSizeBtn.checked = opts.enableMinSize;
+      minWidthInput.disabled = !opts.enableMinSize;
+      minHeightInput.disabled = !opts.enableMinSize;
+    }
+    if (opts.minWidth !== undefined) minWidthInput.value = opts.minWidth;
+    if (opts.minHeight !== undefined) minHeightInput.value = opts.minHeight;
+    if (opts.resolveTypes !== undefined) resolveTypesBtn.checked = opts.resolveTypes;
+    if (opts.renameSequence !== undefined && renameSequenceBtn) renameSequenceBtn.checked = opts.renameSequence;
+  }
+
+  const onChange = () => { processItems(); saveOptions(); };
+
+  extCheckboxes.forEach(cb => cb.addEventListener('change', onChange));
+  minWidthInput.addEventListener('input', onChange);
+  minHeightInput.addEventListener('input', onChange);
+
   if (enableMinSizeBtn) {
     enableMinSizeBtn.addEventListener('change', () => {
       minWidthInput.disabled = !enableMinSizeBtn.checked;
       minHeightInput.disabled = !enableMinSizeBtn.checked;
-      processItems();
+      onChange();
     });
   }
 
+  if (renameSequenceBtn) {
+    renameSequenceBtn.addEventListener('change', saveOptions);
+  }
+
   resolveTypesBtn.addEventListener('change', async (e) => {
+    saveOptions();
     if (e.target.checked) {
       statusEl.textContent = "Checking network...";
-      
+
       let itemsToFetch = rawMediaItems.filter(item => getExtension(item.url) === 'unknown');
 
       if (selectedUrls.size > 0) {
@@ -133,7 +185,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               let dedupKey = 'unknown';
               try {
                 dedupKey = new URL(item.url).pathname;
-              } catch(e) {
+              } catch (e) {
                 dedupKey = item.url;
               }
 
@@ -155,7 +207,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           // Replace only the grouped (non-data-URI) portion, keeping data URI items
           const dataUriItems = dedupedItems.filter(i => i.url.startsWith('data:'));
           dedupedItems = [...dataUriItems, ...grouped];
-          processItems(); 
+          processItems();
         } else if (rawMediaItems.length === 0) {
           statusEl.textContent = "No images found on this page yet. Scroll to load...";
         }
@@ -176,6 +228,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     sourceTabUrl = tabs[0].url || "Unknown URL";
     activeTabId = tabs[0].id;
 
+    // Load persisted options
+    const storageData = await new Promise(resolve => {
+      extAPI.storage.local.get(['popupOptions'], resolve);
+    });
+    if (storageData.popupOptions) {
+      loadOptions(storageData.popupOptions);
+    }
+
     await fetchImages();
     setInterval(fetchImages, 1000);
   } catch (err) {
@@ -184,10 +244,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function getExtension(url) {
-    if (extensionCache.has(url)) return extensionCache.get(url);
-
     if (url.startsWith('data:image/')) {
-      // Match MIME type including svg+xml — capture until ; or ,
       const match = url.match(/data:image\/([a-zA-Z0-9+]+)[;,]/);
       if (match) {
         let ext = match[1].toLowerCase();
@@ -195,7 +252,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (ext === 'svg+xml') return 'svg';
         return ext;
       }
-      return 'unknown';
+      return 'png';
     }
 
     try {
@@ -272,7 +329,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function renderGallery() {
     gallery.innerHTML = '';
-    
+
     displayItems.forEach(item => {
       const itemEl = document.createElement('div');
       itemEl.className = 'media-item';
@@ -283,13 +340,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (downloadedUrls.has(item.url)) {
         itemEl.classList.add('downloaded');
       }
-      
+
       const typeBadge = document.createElement('div');
       typeBadge.className = 'media-type-badge';
       let ext = getExtension(item.url);
       if (ext === 'unknown') ext = 'IMG';
       typeBadge.textContent = ext.toUpperCase();
-      
+
       const checkmark = document.createElement('div');
       checkmark.className = 'checkmark';
 
@@ -297,13 +354,45 @@ document.addEventListener('DOMContentLoaded', async () => {
       mediaContent.src = item.url;
       mediaContent.loading = 'lazy';
 
+      // Fallback for file:// URLs that can't load in extension popups (e.g. Firefox)
+      if (item.url.startsWith('file://')) {
+        mediaContent.onerror = async () => {
+          try {
+            const results = await extAPI.scripting.executeScript({
+              target: { tabId: activeTabId },
+              func: (targetUrl) => {
+                for (const img of document.querySelectorAll('img')) {
+                  if (img.src === targetUrl && img.naturalWidth > 0) {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const maxDim = 480;
+                    let w = img.naturalWidth, h = img.naturalHeight;
+                    if (w > h) { h = (h / w) * maxDim; w = maxDim; }
+                    else { w = (w / h) * maxDim; h = maxDim; }
+                    canvas.width = w;
+                    canvas.height = h;
+                    ctx.drawImage(img, 0, 0, w, h);
+                    return canvas.toDataURL('image/jpeg', 0.6);
+                  }
+                }
+                return null;
+              },
+              args: [item.url]
+            });
+            if (results && results[0] && results[0].result) {
+              mediaContent.src = results[0].result;
+            }
+          } catch (e) {}
+        };
+      }
+
       itemEl.appendChild(mediaContent);
       itemEl.appendChild(typeBadge);
-      
+
       const downloadBadge = document.createElement('div');
       downloadBadge.className = 'download-badge';
       itemEl.appendChild(downloadBadge);
-      
+
       if (item.width && item.height && item.width > 0 && item.height > 0) {
         const sizeBadge = document.createElement('div');
         sizeBadge.className = 'size-badge';
@@ -312,48 +401,48 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       itemEl.appendChild(checkmark);
-      
+
       // Select item on click
       itemEl.addEventListener('click', () => {
-         toggleSelection(itemEl, item.url);
+        toggleSelection(itemEl, item.url);
       });
-      
+
       // Drag and Drop Logic
       itemEl.draggable = true;
       itemEl.addEventListener('dragstart', e => {
         e.dataTransfer.setData('text/plain', item.url);
         itemEl.classList.add('dragging');
       });
-      
+
       itemEl.addEventListener('dragend', () => {
         itemEl.classList.remove('dragging');
         document.querySelectorAll('.media-item').forEach(el => el.classList.remove('drag-over'));
       });
-      
+
       itemEl.addEventListener('dragover', e => {
-        e.preventDefault(); 
+        e.preventDefault();
       });
-      
+
       itemEl.addEventListener('dragenter', e => {
         e.preventDefault();
         if (!itemEl.classList.contains('dragging')) {
-           itemEl.classList.add('drag-over');
+          itemEl.classList.add('drag-over');
         }
       });
-      
+
       itemEl.addEventListener('dragleave', e => {
-         itemEl.classList.remove('drag-over');
+        itemEl.classList.remove('drag-over');
       });
-      
+
       itemEl.addEventListener('drop', e => {
         e.preventDefault();
         itemEl.classList.remove('drag-over');
         const draggedUrl = e.dataTransfer.getData('text/plain');
         if (draggedUrl && draggedUrl !== item.url) {
-           reorderItems(draggedUrl, item.url);
+          reorderItems(draggedUrl, item.url);
         }
       });
-      
+
       // Status bar updates
       itemEl.addEventListener('mouseenter', () => {
         statusBar.textContent = item.url;
@@ -363,7 +452,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         statusBar.textContent = 'Hover over an image to view its URL';
         statusBar.style.color = 'var(--text-muted)';
       });
-      
+
       gallery.appendChild(itemEl);
     });
   }
@@ -382,20 +471,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   function reorderItems(draggedUrl, targetUrl) {
     const draggedIdx = displayItems.findIndex(i => i.url === draggedUrl);
     const targetIdx = displayItems.findIndex(i => i.url === targetUrl);
-    
+
     if (draggedIdx > -1 && targetIdx > -1) {
       // Reorder mapped rendering sequence
       const [item] = displayItems.splice(draggedIdx, 1);
       displayItems.splice(targetIdx, 0, item);
-      
+
       // Persist absolute order to primary deduped source array
       const dDragIdx = dedupedItems.findIndex(i => i.url === draggedUrl);
       const dTargetIdx = dedupedItems.findIndex(i => i.url === targetUrl);
       if (dDragIdx > -1 && dTargetIdx > -1) {
-          const [dItem] = dedupedItems.splice(dDragIdx, 1);
-          dedupedItems.splice(dTargetIdx, 0, dItem);
+        const [dItem] = dedupedItems.splice(dDragIdx, 1);
+        dedupedItems.splice(dTargetIdx, 0, dItem);
       }
-      
+
       renderGallery();
     }
   }
@@ -403,6 +492,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function updateSelectionState() {
     selectionCountEl.textContent = selectedUrls.size;
     downloadBtn.disabled = selectedUrls.size === 0;
+    if (reviewBtn) reviewBtn.disabled = selectedUrls.size === 0;
 
     allSelected = displayItems.length > 0 && selectedUrls.size === displayItems.length;
     selectAllBtn.textContent = allSelected ? "Deselect All" : "Select All";
@@ -437,65 +527,98 @@ document.addEventListener('DOMContentLoaded', async () => {
     const itemsToDownload = displayItems.filter(item => selectedUrls.has(item.url));
     const originalText = downloadBtn.textContent;
     downloadBtn.disabled = true;
-    
-    let logContent = `Media Collector Export Log\nSource: ${sourceTabUrl}\nTimestamp: ${new Date().toLocaleString()}\n=========================================\n\n`;
+
+    // Reset UI indicators before starting fresh download sequence
+    downloadedUrls.clear();
+    document.querySelectorAll('.media-item').forEach(el => {
+      el.classList.remove('downloaded');
+      el.classList.remove('failed');
+    });
+
+    let logContent = `Image Collector Export Log\nSource: ${sourceTabUrl}\nTimestamp: ${new Date().toLocaleString()}\n=========================================\n\n`;
     const payloadItems = [];
 
     for (let i = 0; i < itemsToDownload.length; i++) {
       const item = itemsToDownload[i];
+      const cleanUrl = item.url.trim();
       let filename = 'downloaded_image';
       try {
-        if (!item.url.startsWith('data:')) {
-          filename = new URL(item.url).pathname.split('/').pop() || 'downloaded_image';
-          
-          const validExts = /\.(jpg|jpeg|png|gif|webp|svg|avif|ico|bmp)$/i;
-          if (!validExts.test(filename)) {
+        if (!cleanUrl.startsWith('data:')) {
+          filename = new URL(cleanUrl).pathname.split('/').pop() || 'downloaded_image';
+          let ext = getExtension(cleanUrl);
+          if (ext !== 'unknown' && !filename.toLowerCase().endsWith('.' + ext)) {
             filename = filename.replace(/\.[^/.]+$/, '') || 'downloaded_image';
-            const ext = getExtension(item.url);
-            filename += `.${ext !== 'unknown' ? ext : 'unknown'}`;
+            filename += '.' + ext;
           }
         } else {
-          const ext = getExtension(item.url);
+          let ext = getExtension(cleanUrl);
+          if (ext === 'svg+xml') ext = 'svg';
           filename = `data_image.${ext !== 'unknown' ? ext : 'png'}`;
         }
       } catch (e) {
         filename += '.unknown';
       }
 
-      filename = decodeURIComponent(filename);
+      filename = decodeURIComponent(filename).replace(/[+;]/g, '_');
 
       if (renameSequenceBtn && renameSequenceBtn.checked) {
-         const padZero = String(seqIndex).padStart(3, '0');
-         filename = `${padZero}_${filename}`;
-         seqIndex++;
+        const padZero = String(seqIndex).padStart(3, '0');
+        filename = `${padZero}_${filename}`;
+        seqIndex++;
       }
-      
-      logContent += `File: ${filename}\nURL: ${item.url}\n\n`;
 
       payloadItems.push({
-        url: item.url,
+        url: cleanUrl,
         filename: `${folderName}/${filename}`
       });
     }
-    
+
+    // Listen for real-time background updates to show borders
+    const progressListener = (msg) => {
+      if (msg.action === 'job_update') {
+        const els = Array.from(gallery.children);
+        const el = els.find(e => e.dataset.url === msg.url);
+        if (el) {
+          el.classList.remove('downloaded', 'failed');
+          el.classList.add(msg.status === 'success' ? 'downloaded' : 'failed');
+        }
+        downloadBtn.textContent = `Saving ${msg.index + 1}/${msg.total}`;
+        if (msg.index + 1 === msg.total) {
+          setTimeout(() => {
+            downloadBtn.textContent = "Done";
+            extAPI.runtime.onMessage.removeListener(progressListener);
+            setTimeout(() => {
+              downloadBtn.textContent = originalText;
+              downloadBtn.disabled = selectedUrls.size === 0;
+            }, 2500);
+          }, 300);
+        }
+      }
+    };
+    extAPI.runtime.onMessage.addListener(progressListener);
+
+    // Start background process (which now handles the loop and gallery generation)
     extAPI.runtime.sendMessage({
       action: "start_downloads",
       items: payloadItems,
-      logContent: logContent,
+      sourceTitle: sourceTabTitle,
+      sourceUrl: sourceTabUrl,
       folderName: folderName
     });
+  });
 
-    const els = Array.from(gallery.children);
-    Array.from(selectedUrls).forEach(url => {
-       downloadedUrls.add(url);
-       const targetEl = els.find(el => el.dataset.url === url);
-       if (targetEl) targetEl.classList.add('downloaded');
+  /* ======== Review Overlay Logic ======== */
+  reviewBtn.addEventListener('click', () => {
+    const reviewItems = displayItems.filter(item => selectedUrls.has(item.url));
+    if (reviewItems.length === 0) return;
+
+    // Pass the items to chrome.storage.local before executing the content script
+    extAPI.storage.local.set({ reviewItems: reviewItems }, () => {
+      extAPI.scripting.executeScript({
+        target: { tabId: activeTabId },
+        files: ['review-content.js']
+      });
+      window.close(); // Close the popup so the user can interact with the webpage
     });
-
-    downloadBtn.textContent = "Sent to Background 🚀";
-    setTimeout(() => {
-       downloadBtn.textContent = originalText;
-       downloadBtn.disabled = selectedUrls.size === 0;
-    }, 2500);
   });
 });
