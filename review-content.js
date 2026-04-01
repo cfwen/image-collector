@@ -56,12 +56,12 @@
     }
     .review-control-panel {
       position: absolute;
-      top: 1rem;
-      right: 1rem;
+      top: 14px;
+      right: 14px;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem;
+      gap: 7px;
+      padding: 7px;
       background-color: rgba(0, 0, 0, 0.5);
       backdrop-filter: blur(10px);
       z-index: 1001;
@@ -71,8 +71,8 @@
     }
     .review-status-badge {
       font-weight: 500;
-      font-size: 0.95rem;
-      padding: 0 0.5rem;
+      font-size: 13px;
+      padding: 0 7px;
       color: white;
     }
     .loop-btn {
@@ -90,22 +90,22 @@
       position: relative;
       display: flex;
       align-items: center;
-      font-size: 0.85rem;
+      font-size: 12px;
     }
     .review-period-group::after {
       content: 's';
       position: absolute;
-      right: 0.6rem;
+      right: 8px;
       color: rgba(255, 255, 255, 0.7);
       pointer-events: none;
     }
     .review-period-group input {
-      width: 60px;
-      height: 36px;
+      width: 56px;
+      height: 32px;
       background-color: rgba(255, 255, 255, 0.1);
       color: white;
       border: 1px solid rgba(255, 255, 255, 0.2);
-      padding: 0 1.2rem 0 0.5rem;
+      padding: 0 17px 0 7px;
       border-radius: 8px;
       -moz-appearance: textfield;
       transition: all 0.2s ease;
@@ -124,8 +124,8 @@
       margin: 0;
     }
     .btn {
-      height: 36px;
-      padding: 0 1rem;
+      height: 32px;
+      padding: 0 14px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -135,7 +135,7 @@
       cursor: pointer;
       background-color: rgba(255, 255, 255, 0.1);
       color: white;
-      font-size: 0.85rem;
+      font-size: 12px;
       backdrop-filter: blur(5px);
       transition: all 0.2s ease;
     }
@@ -205,7 +205,7 @@
       background: rgba(255, 255, 255, 0.1);
       border: none;
       color: white;
-      font-size: 2rem;
+      font-size: 28px;
       width: 60px;
       height: 80px;
       border-radius: 8px;
@@ -216,8 +216,8 @@
       justify-content: center;
       pointer-events: auto;
     }
-    .review-nav-btn.prev { left: 1rem; }
-    .review-nav-btn.next { right: 1rem; }
+    .review-nav-btn.prev { left: 14px; }
+    .review-nav-btn.next { right: 14px; }
     .review-nav-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-50%) scale(1.05); }
     .review-nav-btn:active { transform: translateY(-50%) scale(0.95); }
     .review-bottom-bar {
@@ -227,7 +227,7 @@
       width: 100%;
       height: 100px;
       background-color: rgba(0, 0, 0, 0.8);
-      padding: 0.5rem;
+      padding: 7px;
       display: flex;
       align-items: center;
       justify-content: flex-start;
@@ -242,7 +242,7 @@
     
     .review-thumbnails-container {
       display: flex;
-      gap: 0.5rem;
+      gap: 7px;
       min-width: min-content;
       margin: 0 auto;
     }
@@ -338,28 +338,34 @@
     }
     .show-ui-btn {
       position: absolute;
-      top: 1rem;
-      right: 1rem;
-      padding: 0.5rem 1rem;
-      background: rgba(0,0,0,0.5);
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 8px;
-      color: white;
-      font-weight: 500;
+      top: 10px;
+      right: 10px;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 50%;
+      color: rgba(255,255,255,0.5);
+      font-size: 13px;
       cursor: pointer;
-      backdrop-filter: blur(5px);
       z-index: 2000;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.25s ease;
       opacity: 1;
-      transform: translateY(0);
       pointer-events: auto;
     }
     .show-ui-btn.hidden {
       opacity: 0;
-      transform: translateY(-10px);
       pointer-events: none;
     }
-    .show-ui-btn:hover { background: rgba(0,0,0,0.8); }
+    .show-ui-btn:hover {
+      background-color: rgba(255,255,255,0.18);
+      border-color: rgba(255,255,255,0.35);
+      color: white;
+    }
   `;
   shadow.appendChild(style);
 
@@ -367,7 +373,7 @@
   const overlay = document.createElement('div');
   overlay.className = 'review-overlay';
   overlay.innerHTML = `
-    <button id="showUiBtn" class="show-ui-btn hidden">👁 Exit</button>
+    <button id="showUiBtn" class="show-ui-btn hidden">&#x2715;</button>
     <div class="review-control-panel">
       <div class="review-status-badge" id="reviewStatus">0 / 0</div>
       <label class="btn loop-btn">
@@ -380,7 +386,7 @@
       <button id="reviewPlayBtn" class="btn">Play</button>
       <button id="reviewScaleBtn" class="btn">Fit</button>
       <button id="reviewDownloadBtn" class="btn">Download</button>
-      <button id="hideUiBtn" class="btn">⛶ Full Page</button>
+      <button id="hideUiBtn" class="btn">Full Page</button>
       <button id="reviewCloseBtn" class="btn">Close</button>
     </div>
     
@@ -398,6 +404,8 @@
   `;
   shadow.appendChild(overlay);
   document.body.appendChild(host);
+  const _savedOverflow = document.documentElement.style.overflowY;
+  document.documentElement.style.overflowY = 'hidden';
 
   // JavaScript Logic Elements
   const reviewCloseBtn = shadow.getElementById('reviewCloseBtn');
@@ -587,6 +595,7 @@
 
   function closeOverlay() {
     stopSlideshow();
+    document.documentElement.style.overflowY = _savedOverflow;
     host.remove();
     document.removeEventListener('keydown', keydownHandler);
   }
@@ -670,7 +679,7 @@
           thumb.classList.add(msg.status === 'success' ? 'downloaded' : 'failed');
         }
         reviewDownloadBtn.textContent = `Saving ${msg.index + 1}/${msg.total}`;
-        
+
         if (msg.index + 1 === msg.total) {
           setTimeout(() => {
             reviewDownloadBtn.textContent = "Done";
@@ -736,15 +745,13 @@
     overlay.classList.remove('ui-hidden');
     showUiBtn.classList.add('hidden');
     resetHideUiTimeout();
-
     const wrappers = reviewThumbnails.children;
     if (wrappers[currentReviewIndex]) {
       wrappers[currentReviewIndex].scrollIntoView({ behavior: 'auto', inline: 'center', block: 'nearest' });
     }
   });
 
-  let scrollDelta = 0;
-  let scrollResetTimeout;
+  let lastScrollTime = 0;
 
   overlay.addEventListener('wheel', (e) => {
     // Let user horizontally scroll the thumbnail tray naturally
@@ -759,17 +766,15 @@
     e.stopPropagation();
     if (!isManuallyHidden) resetHideUiTimeout();
 
-    clearTimeout(scrollResetTimeout);
-    scrollResetTimeout = setTimeout(() => { scrollDelta = 0; }, 150);
+    const now = Date.now();
+    if (now - lastScrollTime < 250) return;
 
     const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-    scrollDelta += delta;
+    if (delta === 0) return;
 
-    if (Math.abs(scrollDelta) >= 80) {
-      if (scrollDelta > 0) nextReviewImage();
-      else prevReviewImage();
-      scrollDelta = 0;
-    }
+    lastScrollTime = now;
+    if (delta > 0) nextReviewImage();
+    else prevReviewImage();
   }, { passive: false });
 
   function startSlideshow() {

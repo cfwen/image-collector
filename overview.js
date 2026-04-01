@@ -265,6 +265,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       return 'png';
     }
 
+    // Prefer HEAD-resolved type from cache (most accurate)
+    if (extensionCache.has(url)) {
+      const cached = extensionCache.get(url);
+      if (cached !== 'unknown') return cached;
+    }
+
     try {
       const urlObj = new URL(url);
       const pathname = urlObj.pathname;
@@ -279,9 +285,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
 
-      // Fallback: Check the entire URL for extensions (common in proxies/CDNs)
-      const fullPath = urlObj.href.toLowerCase();
-      const match = fullPath.match(/\.(jpg|jpeg|png|gif|webp|svg|avif|ico|bmp)(?:\?|&|#|$)/);
+      // Fallback: scan only the pathname (NOT query string) to avoid
+      // query params like ?format=webp overriding the real image extension.
+      const pathOnly = pathname.toLowerCase();
+      const match = pathOnly.match(/\.(jpg|jpeg|png|gif|webp|svg|avif|ico|bmp)(?:\/|$)/);
       if (match) {
         let ext = match[1];
         if (ext === 'jpeg') return 'jpg';
@@ -544,7 +551,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function updateSelectionState() {
     selectionCountEl.textContent = selectedUrls.size;
-    downloadBtn.disabled = selectedUrls.size === 0;
+    const isLocalFile = sourceTabUrl && sourceTabUrl.startsWith('file://');
+    downloadBtn.disabled = selectedUrls.size === 0 || isLocalFile;
+    downloadBtn.title = isLocalFile ? 'Downloading is not supported for local files' : '';
     if (reviewBtn) reviewBtn.disabled = selectedUrls.size === 0;
 
     allSelected = displayItems.length > 0 && selectedUrls.size === displayItems.length;
@@ -600,8 +609,14 @@ document.addEventListener('DOMContentLoaded', async () => {
           filename = new URL(cleanUrl).pathname.split('/').pop() || 'downloaded_image';
           let ext = getExtension(cleanUrl);
           if (ext !== 'unknown' && !filename.toLowerCase().endsWith('.' + ext)) {
+            // Extension known but filename doesn't end with it — fix it
             filename = filename.replace(/\.[^/.]+$/, '') || 'downloaded_image';
             filename += '.' + ext;
+          } else if (ext === 'unknown') {
+            // No recognisable image extension — strip any non-image suffix (e.g. .php,
+            // .ashx, or no extension at all) and mark .unknown so background.js
+            // will resolve the real type via a HEAD request before downloading.
+            filename = (filename.replace(/\.[^/.]+$/, '') || 'downloaded_image') + '.unknown';
           }
         } else {
           let ext = getExtension(cleanUrl);
